@@ -5,6 +5,9 @@ import oauthSettings as OA
 
 app = flask.Flask(__name__)
 
+#import uuid
+app.secret_key = str(OA.generate_random_code(20))
+
 CLIENT_ID = "489568071894-209q40tq61bg69s3efg1nr9jho98fn7q.apps.googleusercontent.com"
 CLIENT_SECRET = "vI4P_eVHQ8zPuZRthsM0V8GR"
 SCOPE = 'email profile'
@@ -36,7 +39,7 @@ def index():
 @app.route('/oauth2callback')
 def oauth2callback():
   if 'code' not in flask.request.args:
-    state = OA.generate_state()
+    state = OA.generate_random_code(10)
     auth_uri = ('https://accounts.google.com/o/oauth2/v2/auth?response_type=code'
                 '&client_id={}&redirect_uri={}&scope={}&state={}&prompt=consent').format(CLIENT_ID, REDIRECT_URI, SCOPE, state)
     flask.session['state'] = state
@@ -50,12 +53,13 @@ def oauth2callback():
             'grant_type': 'authorization_code'}
     r = requests.post('https://oauth2.googleapis.com/token', data=data)
     flask.session['credentials'] = r.text
-    if flask.session['state'] != flask.request.args.get('state'):
-        return "States do not match"
-    return flask.redirect(flask.url_for('index'))
+    if 'state' in flask.session:
+        if flask.session['state'] != flask.request.args.get('state'):
+            return "States do not match"
+        return flask.redirect(flask.url_for('index'))
+    else:
+        return "state not in session"
 
 if __name__ == '__main__':
-  import uuid
-  app.secret_key = str(uuid.uuid4())
   app.debug = False
   app.run()
