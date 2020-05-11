@@ -1,12 +1,12 @@
 import json
 import flask
 import requests
-import rand_code as rc
+import random_function as rc
 import os
 
 app = flask.Flask(__name__, static_url_path='', static_folder='web/static')
 
-#gcp gets angry if this is not in place
+#gcp gets angry if this is not present
 app.secret_key = str(rc.generate_random_code(20))
 
 #get client_secret file from directory and assign values
@@ -41,6 +41,8 @@ def index():
   if 'credentials' not in flask.session:
     return flask.redirect(flask.url_for('oauth2callback'))
   credentials = json.loads(flask.session['credentials'])
+  if 'expires_in' not in credentials:
+    return flask.redirect(flask.url_for('oauth2callback'))
   if credentials['expires_in'] <= 0:
     return flask.redirect(flask.url_for('oauth2callback'))
   else:
@@ -49,7 +51,6 @@ def index():
     req_uri = 'https://people.googleapis.com/v1/people/me?personFields=names,emailAddresses'
     r = requests.get(req_uri, headers=headers)
     res = json.loads(r.text)
-    #return r.text
     if 'state' not in flask.session:
         return 'state not in session'
     userInfo = {'first name': res["names"][0]["givenName"],
@@ -61,29 +62,26 @@ def index():
 
 @app.route('/oauth2callback')
 def oauth2callback():
-  if 'code' not in flask.request.args:
+  if 'code' not in flask.request.args or 'state' not in flask.session:
     state = rc.generate_random_code(10)
     auth_uri = ('https://accounts.google.com/o/oauth2/v2/auth?response_type=code'
                 '&client_id={}&redirect_uri={}&scope={}&state={}&prompt=consent').format(CLIENT_ID, REDIRECT_URI, SCOPE, state)
     flask.session['state'] = state
     return flask.redirect(auth_uri)
   else:
-    if 'state' not in flask.session:
-        return "State not in session"
-    else:
-        if flask.session['state'] != flask.request.args.get('state'):
-            return "States do not match"  
-        auth_code = flask.request.args.get('code')
-        data = {'code': auth_code,
-                'client_id': CLIENT_ID,
-                'client_secret': CLIENT_SECRET,
-                'redirect_uri': REDIRECT_URI,
-                'grant_type': 'authorization_code'}
-        r = requests.post('https://oauth2.googleapis.com/token', data=data)
-        flask.session['credentials'] = r.text
-        return flask.redirect(flask.url_for('index'))
+    if flask.session['state'] != flask.request.args.get('state'):
+        return "States do not match"  
+    auth_code = flask.request.args.get('code')
+    data = {'code': auth_code,
+            'client_id': CLIENT_ID,
+            'client_secret': CLIENT_SECRET,
+            'redirect_uri': REDIRECT_URI,
+            'grant_type': 'authorization_code'}
+    r = requests.post('https://oauth2.googleapis.com/token', data=data)
+    flask.session['credentials'] = r.text
+    return flask.redirect(flask.url_for('index'))
 
 
 if __name__ == '__main__':
-  app.debug = False
+  app.debug = True
   app.run()
