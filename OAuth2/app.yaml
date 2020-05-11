@@ -3,9 +3,8 @@ runtime: python37
 handlers:
   # This configures Google App Engine to serve the files in the app's static
   # directory.
-#- url: /static
-#  static_dir: static
 
+  #added favicon due to gcp crashing (status 500) without it
 - url: /favicon.ico
   static_files: media/img/favicon.ico
   upload: media/img/favicon.ico
