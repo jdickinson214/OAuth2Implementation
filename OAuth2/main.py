@@ -21,7 +21,7 @@ REDIRECT_URI = 'https://hw6-dickinsj2.uc.r.appspot.com/oauth2callback'
 
 @app.route('/welcome')
 def welcome():
-    return app.send_static_file('welcome.html')
+    return app.send_static_file('./web/static/welcome.html')
 
 #####################################################################################
 # new user flow:    

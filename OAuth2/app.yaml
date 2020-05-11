@@ -8,7 +8,11 @@ handlers:
 - url: /favicon.ico
   static_files: media/img/favicon.ico
   upload: media/img/favicon.ico
-  
+
+- url: /welcome
+  static_files: web/static/welcome.html
+  upload: web/static/welcome.html
+
 - url: /
   script: auto
 
