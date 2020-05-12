@@ -9,6 +9,9 @@ handlers:
   static_files: media/img/favicon.ico
   upload: media/img/favicon.ico
 
+  #google seems inconsistent when uploading static files, and when updating these files.
+  #welcome.html is in root project folder and in web/static/ because gcp updates very slowly, and I'm not exactly sure which one it's updating from so I've included both.
+  #I believe it's the one in web/static/ since I've specified it below, but I can't be certain, so I've left both in.
 - url: /welcome
   static_files: web/static/welcome.html
   upload: web/static/welcome.html

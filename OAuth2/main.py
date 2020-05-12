@@ -36,20 +36,23 @@ def welcome():
 #   format and display to user
 #####################################################################################
 
+#main page
 @app.route('/')
 def index():
   if 'credentials' not in flask.session:
     return flask.redirect(flask.url_for('oauth2callback'))
   credentials = json.loads(flask.session['credentials'])
-  if 'expires_in' not in credentials:
+  if 'expires_in' not in credentials: #gcp throws keyerror if this statement not in place
     return flask.redirect(flask.url_for('oauth2callback'))
   if credentials['expires_in'] <= 0:
     return flask.redirect(flask.url_for('oauth2callback'))
   else:
+    #use obtained token to get info from googleapis
     headers = {'Authorization': 'Bearer {}'.format(
         credentials['access_token'])}
     req_uri = 'https://people.googleapis.com/v1/people/me?personFields=names,emailAddresses'
     r = requests.get(req_uri, headers=headers)
+    #format info and display to user along with state value
     res = json.loads(r.text)
     if 'state' not in flask.session:
         return 'state not in session'
@@ -62,6 +65,7 @@ def index():
 
 @app.route('/oauth2callback')
 def oauth2callback():
+  #code = auth_code from google, state is randomly generated string sent to google and received back from google
   if 'code' not in flask.request.args or 'state' not in flask.session:
     state = rc.generate_random_code(10)
     auth_uri = ('https://accounts.google.com/o/oauth2/v2/auth?response_type=code'
@@ -69,6 +73,7 @@ def oauth2callback():
     flask.session['state'] = state
     return flask.redirect(auth_uri)
   else:
+    #code and state are present, send creds to google for token
     if flask.session['state'] != flask.request.args.get('state'):
         return "States do not match"  
     auth_code = flask.request.args.get('code')
